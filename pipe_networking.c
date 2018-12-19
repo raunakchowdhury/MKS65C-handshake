@@ -78,14 +78,14 @@ int client_handshake(int *to_server) {
   }
 
   char response[256];
-  fd = open("secret_pipe", O_RDONLY);
-  if (fd == -1){
+  int secret_response = open("secret_pipe", O_RDONLY);
+  if (secret_response == -1){
     printf("Open Attempt Error: %s\n", strerror(errno));
   }
 
   // read response
   printf("Reading response from server...\n" );
-  if (!read(fd, response, 256)){
+  if (!read(secret_response, response, 256)){
     printf("Client read error: %s\n", strerror(errno));
   }
   else{
@@ -94,15 +94,15 @@ int client_handshake(int *to_server) {
 
   // send back a message
   printf("Final exchange...\n");
-  fd = open("well_known_pipe", O_WRONLY);
-  if (fd == -1){
+  int final_exchange = open("well_known_pipe", O_WRONLY);
+  if (final_exchange == -1){
     printf("Open Attempt Error: %s\n", strerror(errno));
   }
   char * final_response = "Done!";
-  if (!write(fd, final_response, strlen(final_response))){
+  if (!write(final_exchange, final_response, strlen(final_response))){
     printf("Client write error: %s\n", strerror(errno));
   }
 
-
+  *to_server = secret_response;
   return fd;
 }
