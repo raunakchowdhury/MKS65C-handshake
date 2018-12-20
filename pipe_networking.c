@@ -11,8 +11,9 @@
   returns the file descriptor for the upstream pipe.
   =========================*/
 int server_handshake(int *to_client) {
-  mkfifo("well_known_pipe", 0644);
-  printf("Pipe initialized!\n");
+  if (!mkfifo("well_known_pipe", 0644)){
+    printf("Pipe initialized!\n");
+  }
 
   char *message = "Message received!";
   char pipe_name[256];
@@ -44,7 +45,7 @@ int server_handshake(int *to_client) {
   else{
     printf("Response from client: \'%s\'\n", response);
   }
-
+  printf("============ENDING HANDSHAKE==============\n\n");
 
   *to_client = secret_pipe;
 
@@ -65,8 +66,10 @@ int client_handshake(int *to_server) {
   int fd;
   int new_pipe;
 
-  mkfifo("secret_pipe", 0644);
-  printf("Pipe initialized!\n");
+  printf("============SENDING HANDSHAKE==============\n");
+  if (!mkfifo("secret_pipe", 0644)){
+    printf("Pipe initialized!\n");
+  }
 
   fd = open("well_known_pipe", O_WRONLY);
   if (fd == -1){
@@ -93,7 +96,7 @@ int client_handshake(int *to_server) {
   }
 
   // send back a message
-  printf("Final exchange...\n");
+  printf("Final exchange...\n\n");
   int final_exchange = open("well_known_pipe", O_WRONLY);
   if (final_exchange == -1){
     printf("Open Attempt Error: %s\n", strerror(errno));
@@ -105,4 +108,81 @@ int client_handshake(int *to_server) {
 
   *to_server = secret_response;
   return fd;
+}
+
+/*=========================
+  client_process
+  args: none
+
+  Client sends messages to the server using the pipe.
+  =========================*/
+void client_process(){
+  int len;
+  if (!mkfifo("secret_pipe_two", 0644)){
+    printf("Created second pipe!\n" );
+  }
+
+  printf("User, input some stuff to be modified by the server (255 chars max): ");
+  char input[256];
+  fgets(input, 256, stdin);
+  len = strlen(input);
+  input[len-1] = 0;
+
+  // open and write the message to the first pipe
+  int secret_pipe = open("secret_pipe", O_WRONLY);
+  if (secret_pipe == -1){
+    printf("Open Attempt Error: %s\n", strerror(errno));
+  }
+  if (!write(secret_pipe, input, 256)){
+    printf("Write error: %s\n", strerror(errno));
+  }
+
+  //await the response from the server and display the response
+  char response[256];
+  int secret_pipe_two = open("secret_pipe_two", O_RDONLY);
+  if (secret_pipe_two == -1){
+    printf("Open Attempt Error: %s\n", strerror(errno));
+  }
+  if (!read(secret_pipe_two, response, 1000)){
+    printf("Read error: %s\n", strerror(errno));
+  }
+  else{
+    printf("Server returned: %s\n\n", response);
+  }
+}
+
+/*=========================
+  client_process
+  args: none
+
+  Server modifies the client messages and returns them.
+  =========================*/
+void server_process(){
+  char message[400];
+
+  // open and read the message
+  int secret_pipe = open("secret_pipe", O_RDONLY);
+  if (secret_pipe == -1){
+    printf("Open Attempt Error: %s\n", strerror(errno));
+  }
+  if (!read(secret_pipe, message, 256)){
+    printf("Read error: %s\n", strerror(errno));
+  }
+  printf("Received response! Writing back...\n");
+  // printf("Message: \'%s\'\n", message);
+  strcat(message, " Mr K says hi!");
+  message[strlen(message)] = 0;
+  // printf("Message after change: \'%s\'\n", message);
+
+  //Write response to the client
+  int secret_pipe_two = open("secret_pipe_two", O_WRONLY);
+  if (secret_pipe_two == -1){
+    printf("Open Attempt Error: %s\n", strerror(errno));
+  }
+  if (!write(secret_pipe_two, message, 400)){
+    printf("Write error: %s\n", strerror(errno));
+  }
+  else{
+    printf("Response sent!\n\n");
+  }
 }

@@ -7,4 +7,9 @@ int main() {
   int from_server;
 
   from_server = client_handshake( &to_server );
+  while(1){
+    client_process();
+  }
+
+
 }
