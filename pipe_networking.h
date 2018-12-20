@@ -19,7 +19,3 @@ int server_handshake(int *to_client);
 int client_handshake(int *to_server);
 
 #endif
-
-void client_process();
-
-void server_process();

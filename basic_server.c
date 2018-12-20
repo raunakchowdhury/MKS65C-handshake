@@ -15,13 +15,23 @@ static void sighandler(int signo){
 }
 
 int main() {
-
   int to_client;
   int from_client;
-  from_client = server_handshake( &to_client );
-  signal(SIGINT, sighandler);
-  while(1){
-    server_process();
-  }
+  int pipe_end;
 
+  int size = BUFFER_SIZE;
+  char msg[size];
+  signal(SIGINT, sighandler);
+
+  while(1){
+    from_client = server_handshake( &to_client );
+    while(read(from_client, msg, size)){
+      //printf("msg: \'%s\'\n", msg);
+
+      strcat(msg, " - Mr K");
+      write(to_client, msg, size);
+      printf("Response sent!\n");
+    }
+    printf("Pipe closed. Server available.\n\n" );
+  }
 }
