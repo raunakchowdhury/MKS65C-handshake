@@ -17,7 +17,7 @@ int server_handshake(int *to_client) {
   }
 
   char *message = "Message received!";
-  char pipe_name[256];
+  char *pipe_name = calloc(256, sizeof(char));
 
   int fd;
   fd = open("well_known_pipe", O_RDONLY);
@@ -34,6 +34,7 @@ int server_handshake(int *to_client) {
   *to_client = open(pipe_name, O_WRONLY);
   if (*to_client == -1){
     printf("Open Attempt Error: %s\n", strerror(errno));
+    exit(0);
   }
   if (!write(*to_client, "Request received!", 256)){
     printf("Server read error: %s\n", strerror(errno));
