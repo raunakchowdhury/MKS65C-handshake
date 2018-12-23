@@ -44,8 +44,12 @@ int server_handshake(int *to_client) {
   printf("Awaiting response from client...\n");
   if (!read(fd, response, 256)){
     printf("Server read error: %s\n", strerror(errno));
+    exit(0);
   }
   else{
+    // set up the read portion of the secret pipe, remove general pipe
+    fd = open(response, O_RDONLY);
+    remove("well_known_pipe");
     printf("Response from client: \'%s\'\n", response);
   }
   printf("============ENDING HANDSHAKE==============\n\n");
@@ -96,11 +100,18 @@ int client_handshake(int *to_server) {
   }
 
   // send back a message
-  printf("Final exchange...\n\n");
-  char * final_response = "Done!";
+  printf("Setting a second pipe...\n\n");
 
-  if (!write(*to_server, final_response, strlen(final_response))){
+  // build a second pipe
+  if (!mkfifo("secret2", 0644)){
+    printf("Second pipe initialized!\n");
+  }
+  char * second_pipe = "secret2";
+
+  if (!write(*to_server, second_pipe, strlen(second_pipe))){
     printf("Client write error: %s\n", strerror(errno));
   }
+
+  *to_server = open(second_pipe, O_WRONLY);
   return secret_response;
 }
