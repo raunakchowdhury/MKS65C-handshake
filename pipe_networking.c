@@ -86,6 +86,7 @@ int client_handshake(int *to_server) {
 
   char response[256];
   int secret_response = open(pipe, O_RDONLY);
+  remove(pipe);
   if (secret_response == -1){
     printf("Open Attempt Error: %s\n", strerror(errno));
   }
@@ -113,5 +114,6 @@ int client_handshake(int *to_server) {
   }
 
   *to_server = open(second_pipe, O_WRONLY);
+  remove(second_pipe);
   return secret_response;
 }
