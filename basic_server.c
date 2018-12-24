@@ -25,13 +25,18 @@ int main() {
 
   while(1){
     from_client = server_handshake( &to_client );
-    while(read(from_client, msg, size)){
-      //printf("msg: \'%s\'\n", msg);
+    if (!fork()){
 
-      strcat(msg, " - Mr K");
-      write(to_client, msg, size);
-      printf("Response sent!\n");
+      // keep Reading until client closes
+      while(read(from_client, msg, size)){
+        //printf("msg: \'%s\'\n", msg);
+
+        strcat(msg, " - Mr K");
+        write(to_client, msg, size);
+        printf("Response sent!\n");
+      }
+      printf("Pipe closed. Server available.\n\n" );
+      exit(0);
     }
-    printf("Pipe closed. Server available.\n\n" );
-  }
+}
 }
